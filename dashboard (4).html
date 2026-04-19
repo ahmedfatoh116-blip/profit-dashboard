@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>داشبورد الأرباح</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c10;--bg2:#111318;--bg3:#181c24;--bg4:#1e2230;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --text:#e8eaf0;--muted:#6b7494;--muted2:#9aa0bb;
+  --green:#4ade80;--green-bg:rgba(74,222,128,0.1);--green-border:rgba(74,222,128,0.25);
+  --red:#f87171;--red-bg:rgba(248,113,113,0.1);--red-border:rgba(248,113,113,0.25);
+  --cyan:#22d3ee;--cyan-bg:rgba(34,211,238,0.1);--cyan-border:rgba(34,211,238,0.25);
+  --amber:#fbbf24;--amber-bg:rgba(251,191,36,0.1);--amber-border:rgba(251,191,36,0.25);
+  --purple:#a78bfa;--purple-bg:rgba(167,139,250,0.1);
+  --sans:'IBM Plex Sans Arabic',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh;}
+.shell{display:grid;grid-template-columns:230px 1fr;min-height:100vh;}
+.sidebar{background:var(--bg2);border-left:1px solid var(--border);padding:20px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.main{padding:24px 28px;overflow-y:auto;}
+.logo{font-size:15px;font-weight:600;padding:0 8px 16px;border-bottom:1px solid var(--border);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.logo em{color:var(--green);font-style:normal;}
+.nav-s{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:10px 8px 4px;}
+.nav-item{padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--muted2);font-size:13px;display:flex;align-items:center;gap:9px;transition:all .15s;user-select:none;}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;}
+/* CREDS */
+.creds-box{margin-top:auto;padding-top:14px;border-top:1px solid var(--border);}
+.cred-group{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;}
+.cred-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.ci{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:6px 9px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;margin-bottom:4px;}
+.ci:focus{border-color:var(--cyan);}
+.ci::placeholder{color:var(--muted);}
+.cbtn{width:100%;margin-top:2px;padding:7px;border-radius:7px;font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;border:1px solid;transition:all .15s;}
+.cbtn.eo{background:var(--cyan-bg);border-color:var(--cyan-border);color:var(--cyan);}
+.cbtn.qp{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber);}
+.cbtn:hover{filter:brightness(1.15);}
+.conn-row{display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:11px;color:var(--muted);}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);flex-shrink:0;transition:all .3s;}
+.dot.ok{background:var(--green);border-color:var(--green);}
+.dot.err{background:var(--red);border-color:var(--red);}
+.dot.spin{background:var(--amber);border-color:var(--amber);animation:pulse .8s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* LAYOUT */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.page-title{font-size:19px;font-weight:600;}
+.page-title small{font-size:12px;color:var(--muted);font-weight:400;margin-right:6px;}
+.btn{background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:7px 14px;font-family:var(--sans);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn:hover{background:var(--bg4);}
+.btn.g{background:var(--green-bg);border-color:var(--green-border);color:var(--green);}
+.btn.g:hover{background:rgba(74,222,128,0.18);}
+.btn svg{transition:transform .4s;}
+.btn.spinning svg{animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+/* FILTERS */
+.filters{display:flex;gap:6px;margin-bottom:18px;align-items:center;flex-wrap:wrap;}
+.chip{padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--muted2);font-family:var(--sans);font-size:12px;cursor:pointer;transition:all .15s;}
+.chip:hover{color:var(--text);}
+.chip.active{background:var(--green-bg);border-color:var(--green-border);color:var(--green);}
+.dw{display:flex;gap:5px;align-items:center;font-size:12px;color:var(--muted);}
+.dw input{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:5px 8px;color:var(--text);font-family:var(--sans);font-size:12px;outline:none;}
+/* KPI */
+.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:15px 17px;position:relative;overflow:hidden;}
+.kpi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+.kpi-val{font-size:22px;font-weight:600;font-family:var(--mono);line-height:1.1;}
+.kpi-val.g{color:var(--green);} .kpi-val.r{color:var(--red);} .kpi-val.c{color:var(--cyan);} .kpi-val.a{color:var(--amber);} .kpi-val.p{color:var(--purple);}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.kglow{position:absolute;top:-10px;right:-10px;width:60px;height:60px;border-radius:50%;filter:blur(24px);opacity:.12;}
+/* SECTION */
+.sec{background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;overflow:hidden;}
+.sec-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.sec-head h2{font-size:13px;font-weight:500;}
+.sec-badge{font-size:11px;background:var(--bg3);color:var(--muted);padding:2px 9px;border-radius:20px;}
+/* TABLE */
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{padding:8px 12px;text-align:right;font-size:10px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--border);font-size:13px;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:rgba(255,255,255,0.015);}
+.mono{font-family:var(--mono);font-size:12px;}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
+.pill::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.pd{background:var(--green-bg);color:var(--green);}
+.pp{background:var(--amber-bg);color:var(--amber);}
+.po{background:var(--cyan-bg);color:var(--cyan);}
+.pu{background:var(--red-bg);color:var(--red);}
+.ph{background:var(--purple-bg);color:var(--purple);}
+.pc{font-family:var(--mono);font-size:12px;font-weight:500;}
+.pc.pos{color:var(--green);} .pc.neg{color:var(--red);}
+/* PAG */
+.pag{padding:10px 16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.pag span{font-size:12px;color:var(--muted);}
+.pag-btns{display:flex;gap:5px;}
+.pb{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 11px;color:var(--muted2);font-size:12px;cursor:pointer;font-family:var(--sans);}
+.pb:hover:not(:disabled){color:var(--text);}
+.pb:disabled{opacity:.3;cursor:default;}
+/* PRODUCTS COST TABLE */
+.prod-grid{padding:14px 16px;display:flex;flex-direction:column;gap:8px;}
+.prod-row{display:grid;grid-template-columns:1fr 140px 100px auto;gap:8px;align-items:center;}
+.prod-row input{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;width:100%;}
+.prod-row input:focus{border-color:var(--amber);}
+.prod-row input.mono-in{font-family:var(--mono);}
+.prod-row label{font-size:11px;color:var(--muted);}
+.add-prod-btn{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green);border-radius:7px;padding:7px 14px;font-family:var(--sans);font-size:12px;cursor:pointer;}
+.add-prod-btn:hover{background:rgba(74,222,128,0.18);}
+.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px 8px;border-radius:5px;}
+.del-btn:hover{color:var(--red);background:var(--red-bg);}
+.prod-header{display:grid;grid-template-columns:1fr 140px 100px auto;gap:8px;padding:0 0 6px;border-bottom:1px solid var(--border);margin-bottom:4px;}
+.prod-header span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+/* PARSED ITEMS in order row */
+.items-list{font-size:11px;color:var(--muted2);margin-top:3px;line-height:1.6;}
+.item-match{color:var(--green);}
+.item-nomatch{color:var(--amber);}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:24px;width:500px;max-width:95vw;max-height:80vh;overflow-y:auto;}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:16px;}
+.modal-close{float:left;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;}
+/* ADS */
+.ads-row{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:flex-end;flex-wrap:wrap;}
+.af{display:flex;flex-direction:column;gap:4px;}
+.af label{font-size:11px;color:var(--muted);}
+.af input{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;width:120px;}
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:9px 16px;font-size:12px;color:var(--text);display:flex;align-items:center;gap:7px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:999;max-width:90vw;}
+.toast.show{opacity:1;}
+.toast.ok{border-color:var(--green-border);color:var(--green);}
+.toast.err{border-color:var(--red-border);color:var(--red);}
+.tdot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.page{display:none;} .page.active{display:block;}
+.empty{text-align:center;padding:36px;color:var(--muted);font-size:13px;}
+.tot-row td{font-weight:500;background:var(--bg3);}
+.chart-pad{padding:16px;}
+/* PROFIT SUMMARY BOX */
+.profit-box{border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.profit-box.win{background:rgba(74,222,128,0.08);border:1px solid var(--green-border);}
+.profit-box.lose{background:rgba(248,113,113,0.08);border:1px solid var(--red-border);}
+.profit-box .big{font-size:28px;font-weight:700;font-family:var(--mono);}
+.profit-box.win .big{color:var(--green);}
+.profit-box.lose .big{color:var(--red);}
+.profit-box .label{font-size:12px;color:var(--muted);margin-bottom:4px;}
+.profit-box .verdict{font-size:13px;font-weight:600;}
+.profit-box.win .verdict{color:var(--green);}
+.profit-box.lose .verdict{color:var(--red);}
+@media(max-width:900px){.shell{grid-template-columns:1fr;}.sidebar{position:static;height:auto;}.kgrid{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="logo">📦 Profit<em>Track</em></div>
+  <div class="nav-s">الصفحات</div>
+  <div class="nav-item active" onclick="nav('orders',this)">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="12" rx="2"/><path d="M5 6h6M5 9h4"/></svg>الأوردرات
+  </div>
+  <div class="nav-item" onclick="nav('daily',this)">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12L5 8l3 2 3-5 3 2"/></svg>ملخص يومي
+  </div>
+  <div class="nav-item" onclick="nav('products',this)">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>تكاليف المنتجات
+  </div>
+  <div class="nav-item" onclick="nav('ads',this)">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>الإعلانات
+  </div>
+
+  <div class="creds-box">
+    <div class="cred-group">
+      <div class="cred-lbl">QP Express</div>
+      <input class="ci" id="qp-user" type="text" placeholder="Email / Username"/>
+      <input class="ci" id="qp-pass" type="password" placeholder="Password"/>
+      <button class="cbtn qp" onclick="connectQP()">توصيل QP Express</button>
+    </div>
+    <div class="cred-group">
+      <div class="cred-lbl">EasyOrders (اختياري)</div>
+      <input class="ci" id="eo-key" type="password" placeholder="API Key"/>
+      <button class="cbtn eo" onclick="connectEO()">توصيل EasyOrders</button>
+    </div>
+    <div class="conn-row"><div class="dot" id="qp-dot"></div><span id="qp-lbl">QP Express: غير متصل</span></div>
+    <div class="conn-row"><div class="dot" id="eo-dot"></div><span id="eo-lbl">EasyOrders: غير متصل</span></div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+
+<!-- ── ORDERS ── -->
+<div id="page-orders" class="page active">
+  <div class="page-header">
+    <div class="page-title">الأوردرات <small>QP Express</small></div>
+    <button class="btn g" id="ref-btn" onclick="loadAll()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 2.5A6.5 6.5 0 1 1 2.5 8"/><path d="M13.5 2.5V6h-3.5"/></svg>تحديث
+    </button>
+  </div>
+
+  <!-- PROFIT SUMMARY -->
+  <div id="profit-box" class="profit-box" style="display:none">
+    <div>
+      <div class="label">النتيجة للفترة المحددة</div>
+      <div class="verdict" id="verdict-txt">—</div>
+    </div>
+    <div style="text-align:left">
+      <div class="label">صافي الربح</div>
+      <div class="big" id="verdict-num">—</div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="chip active" onclick="setF('all',this)">الكل</button>
+    <button class="chip" onclick="setF('Delivered',this)">مُسلَّم ✓</button>
+    <button class="chip" onclick="setF('Out For Deliver',this)">جاري التوصيل</button>
+    <button class="chip" onclick="setF('Pending',this)">انتظار</button>
+    <button class="chip" onclick="setF('Undelivered',this)">لم يُسلَّم</button>
+    <button class="chip" onclick="setF('Hold',this)">موقوف</button>
+    <div class="dw">من <input type="date" id="df" onchange="applyF()"> إلى <input type="date" id="dt" onchange="applyF()"></div>
+  </div>
+
+  <div class="kgrid">
+    <div class="kpi"><div class="kglow" style="background:var(--green)"></div><div class="kpi-lbl">صافي الربح</div><div class="kpi-val g" id="k-profit">— ج</div><div class="kpi-sub" id="k-profit-sub">بعد كل التكاليف</div></div>
+    <div class="kpi"><div class="kglow" style="background:var(--cyan)"></div><div class="kpi-lbl">إجمالي الإيراد</div><div class="kpi-val c" id="k-rev">— ج</div><div class="kpi-sub">المُسلَّم فقط</div></div>
+    <div class="kpi"><div class="kglow" style="background:var(--amber)"></div><div class="kpi-lbl">تكلفة البضاعة</div><div class="kpi-val a" id="k-cogs">— ج</div><div class="kpi-sub" id="k-cogs-sub">من جدول المنتجات</div></div>
+    <div class="kpi"><div class="kglow" style="background:var(--red)"></div><div class="kpi-lbl">رسوم الشحن</div><div class="kpi-val r" id="k-fees">— ج</div><div class="kpi-sub">من QP مباشرة</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-head"><h2>قائمة الأوردرات</h2><span class="sec-badge" id="ord-badge">0</span></div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Serial</th><th>العميل</th><th>التاريخ</th><th>المدينة</th>
+          <th>محتوى الشحنة والمنتجات</th>
+          <th>الإيراد</th><th>تكلفة البضاعة</th><th>رسوم الشحن</th>
+          <th>حالة التوصيل</th><th>ربح / خسارة</th>
+        </tr></thead>
+        <tbody id="ord-body"><tr><td colspan="10" class="empty">وصّل QP Express لتحميل الأوردرات</td></tr></tbody>
+      </table>
+    </div>
+    <div class="pag">
+      <span id="pag-info">—</span>
+      <div class="pag-btns">
+        <button class="pb" id="prev-btn" onclick="goPage(-1)" disabled>السابق</button>
+        <button class="pb" id="next-btn" onclick="goPage(1)">التالي</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PRODUCTS COST ── -->
+<div id="page-products" class="page">
+  <div class="page-header">
+    <div class="page-title">تكاليف المنتجات <small>بيُستخدم في حساب الربح لكل أوردر</small></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" id="import-btn" onclick="importFromEO()" style="color:var(--cyan);border-color:var(--cyan-border);background:var(--cyan-bg)">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3"/><path d="M2 12h12"/></svg>
+        استيراد من EasyOrders
+      </button>
+      <button class="btn g" onclick="addProd()">+ إضافة يدوي</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-head">
+      <h2>📦 جدول تكاليف المنتجات</h2>
+      <span class="sec-badge">بيتطابق مع shipment_contents في QP</span>
+    </div>
+    <div class="prod-grid">
+      <div class="prod-header">
+        <span>اسم المنتج (أو جزء منه للمطابقة)</span>
+        <span>تكلفة الوحدة (ج)</span>
+        <span>سعر البيع (ج)</span>
+        <span></span>
+      </div>
+      <div id="prod-list"></div>
+      <div style="padding-top:8px;border-top:1px solid var(--border);margin-top:4px">
+        <div class="prod-row">
+          <input type="text" id="np-name" placeholder="مثال: عرض كامل روز" />
+          <input type="number" id="np-cost" placeholder="تكلفة الوحدة" class="mono-in" min="0"/>
+          <input type="number" id="np-price" placeholder="سعر البيع" class="mono-in" min="0"/>
+          <button class="add-prod-btn" onclick="addProd()">+ إضافة</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-head"><h2>⚙️ إعدادات عامة</h2></div>
+    <div style="padding:14px 16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+      <div class="af">
+        <label>تكلفة افتراضية للوحدة لو مش موجودة في الجدول (ج)</label>
+        <input type="number" id="cfg-default-cost" value="0" min="0" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;" onchange="recalc()"/>
+      </div>
+      <div class="af">
+        <label>مصاريف أخرى ثابتة / أوردر (ج)</label>
+        <input type="number" id="cfg-other" value="0" min="0" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;" onchange="recalc()"/>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── DAILY ── -->
+<div id="page-daily" class="page">
+  <div class="page-header"><div class="page-title">الملخص اليومي</div></div>
+  <div class="sec">
+    <div class="sec-head"><h2>الربح اليومي</h2></div>
+    <div class="chart-pad"><canvas id="daily-chart" height="250" role="img" aria-label="رسم بياني للربح اليومي">رسم بياني للربح اليومي</canvas></div>
+  </div>
+  <div class="sec">
+    <div class="sec-head"><h2>تفاصيل يومية</h2></div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>اليوم</th><th>مُسلَّم</th><th>إيراد</th><th>تكلفة بضاعة</th><th>رسوم شحن</th><th>إعلانات</th><th>أخرى</th><th>صافي الربح</th><th>هامش %</th></tr></thead>
+        <tbody id="daily-body"><tr><td colspan="9" class="empty">لا توجد بيانات</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADS ── -->
+<div id="page-ads" class="page">
+  <div class="page-header"><div class="page-title">مصاريف الإعلانات</div></div>
+  <div class="sec">
+    <div class="sec-head"><h2>إضافة مصروف</h2></div>
+    <div class="ads-row">
+      <div class="af"><label>التاريخ</label><input type="date" id="ads-d" style="width:auto"/></div>
+      <div class="af"><label>المبلغ (ج)</label><input type="number" id="ads-a" placeholder="0"/></div>
+      <div class="af"><label>المنصة</label><input type="text" id="ads-n" placeholder="فيسبوك / تيك توك..." style="width:180px"/></div>
+      <button class="btn" style="color:var(--amber);border-color:var(--amber-border);background:var(--amber-bg);margin-bottom:1px" onclick="addAds()">+ إضافة</button>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>التاريخ</th><th>المبلغ</th><th>المنصة</th><th></th></tr></thead>
+        <tbody id="ads-body"><tr><td colspan="4" class="empty">لا توجد مصاريف</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+<div class="toast" id="toast"><div class="tdot"></div><span id="toast-msg"></span></div>
+
+<!-- MANUAL IMPORT MODAL -->
+<div class="modal-overlay" id="manual-overlay">
+  <div class="modal" style="width:560px">
+    <button class="modal-close" onclick="closeManual()">✕</button>
+    <h3>استيراد المنتجات يدوياً</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.7">
+      البراوزر بيمنع الاتصال المباشر بـ EasyOrders (CORS).<br>
+      افتح الـ URL ده في تاب جديد، انسخ كل النص، والصقه هنا:
+    </p>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <input id="manual-key" type="text" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;" placeholder="API Key" readonly/>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;font-family:var(--mono);word-break:break-all;color:var(--cyan)">
+      https://api.easy-orders.net/api/v1/external-apps/products?limit=100
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button class="btn" onclick="copyAPIUrl()" style="flex:1;justify-content:center">📋 نسخ الـ URL</button>
+      <button class="btn" onclick="window.open('https://api.easy-orders.net/api/v1/external-apps/products?limit=100','_blank')" style="flex:1;justify-content:center;color:var(--cyan)">🔗 فتح في تاب جديد</button>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:8px">
+      ⚠️ لازم تضيف الـ API Key في الـ Header — افتح الـ URL في تاب جديد، ستشوف خطأ CORS أو JSON. استخدم أداة زي <b>Hoppscotch</b> أو <b>Postman</b> بدلاً من ده.<br><br>
+      <b>أسهل طريقة:</b> افتح Console في البراوزر (F12) والصق الكود ده:
+    </p>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px;font-size:10px;font-family:var(--mono);color:var(--green);margin-bottom:12px;white-space:pre-wrap;user-select:all" id="console-code"></div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:8px">انسخ الناتج (JSON) والصقه هنا:</p>
+    <textarea id="manual-json" style="width:100%;height:120px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:9px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;resize:vertical" placeholder='[{"name":"منتج 1","price":100}, ...]'></textarea>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn g" onclick="importManualJSON()" style="flex:1;justify-content:center">✓ استيراد</button>
+      <button class="btn" onclick="closeManual()" style="flex:1;justify-content:center">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════
+const QP_BASE = 'https://api.qpxpress.com';
+const EO_BASE = 'https://api.easy-orders.net/api/v1/external-apps';
+
+let qpToken='', qpUser='', qpPass='', eoKey='';
+let qpOrders=[], merged=[], filtered=[], ads=[];
+let products=[]; // [{name, cost, price}]
+let page=1; const PER=30;
+let fStatus='all', dayChart=null;
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',()=>{
+  qpToken= ls('qp_token')||''; qpUser= ls('qp_user')||''; qpPass= ls('qp_pass')||'';
+  eoKey  = ls('eo_key')||'';
+  products = JSON.parse(ls('products')||'[]');
+  ads      = JSON.parse(ls('ads')||'[]');
+
+  if(qpUser) g('qp-user').value=qpUser;
+  if(qpPass) g('qp-pass').value=qpPass;
+  if(eoKey)  g('eo-key').value=eoKey;
+  if(qpToken) setDot('qp','ok','QP Express: متصل');
+
+  renderProds(); renderAds();
+
+  const today=new Date().toISOString().slice(0,10);
+  const d30=new Date(Date.now()-30*864e5).toISOString().slice(0,10);
+  g('df').value=d30; g('dt').value=today; g('ads-d').value=today;
+
+  if(qpToken) loadAll();
+});
+
+function ls(k,v){ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }
+function g(id){ return document.getElementById(id); }
+function fmt(n){ return Math.round(n).toLocaleString('ar-EG'); }
+
+// ═══════════════════════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════════════════════
+function nav(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  g('page-'+name).classList.add('active'); el.classList.add('active');
+  if(name==='daily') buildDaily();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CONNECT
+// ═══════════════════════════════════════════════════════════
+async function connectQP(){
+  qpUser=g('qp-user').value.trim(); qpPass=g('qp-pass').value.trim();
+  if(!qpUser||!qpPass){ toast('أدخل Username وPassword','err'); return; }
+  setDot('qp','spin','جاري المصادقة...');
+  try{
+    const r=await fetch(`${QP_BASE}/api/token/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:qpUser,password:qpPass})});
+    if(!r.ok){ const t=await r.text().catch(()=>''); throw new Error(`${r.status}: ${t.slice(0,60)}`); }
+    const d=await r.json();
+    qpToken=d.token||d.access||d.access_token;
+    if(!qpToken) throw new Error('No token');
+    ls('qp_token',qpToken); ls('qp_user',qpUser); ls('qp_pass',qpPass);
+    setDot('qp','ok','QP Express: متصل ✓');
+    toast('تم الاتصال بـ QP Express ✓','ok');
+    loadAll();
+  }catch(e){ setDot('qp','err','QP: '+e.message); toast('خطأ: '+e.message,'err'); }
+}
+
+async function connectEO(){
+  eoKey=g('eo-key').value.trim();
+  if(!eoKey){ toast('أدخل API Key','err'); return; }
+  ls('eo_key',eoKey); setDot('eo','spin','جاري...');
+  try{
+    const r=await fetch(`${EO_BASE}/orders?limit=1`,{headers:{'Api-Key':eoKey}});
+    if(!r.ok) throw new Error(r.status);
+    setDot('eo','ok','EasyOrders: متصل ✓'); toast('EasyOrders متصل ✓','ok');
+  }catch(e){ setDot('eo','err','EasyOrders: '+e.message); toast('خطأ EasyOrders: '+e.message,'err'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LOAD QP ORDERS
+// ═══════════════════════════════════════════════════════════
+async function loadAll(){
+  if(!qpToken){ toast('وصّل QP Express الأول','err'); return; }
+  const btn=g('ref-btn'); btn.classList.add('spinning');
+  toast('جاري تحميل الأوردرات...','');
+  const df=g('df').value, dt=g('dt').value;
+  try{
+    let p=1, all=[];
+    while(true){
+      const q=new URLSearchParams({page:p,page_size:100});
+      if(df) q.append('from_date',df);
+      if(dt) q.append('to_date',dt);
+      const r=await fetch(`${QP_BASE}/integration/order?${q}`,{headers:{'Authorization':`Bearer ${qpToken}`,'Content-Type':'application/json'}});
+      if(r.status===401){ await reAuth(); await new Promise(res=>setTimeout(res,500)); continue; }
+      if(!r.ok){ const t=await r.text().catch(()=>''); throw new Error(`QP ${r.status}: ${t.slice(0,60)}`); }
+      const d=await r.json();
+      const batch=d.results||(Array.isArray(d)?d:[]);
+      all=all.concat(batch);
+      if(!d.next||batch.length<100) break;
+      p++; if(p>30) break;
+    }
+    qpOrders=all;
+    setDot('qp','ok',`QP: ${all.length} شحنة`);
+    merged=all; applyF();
+    toast(`تم تحميل ${all.length} أوردر ✓`,'ok');
+  }catch(e){ setDot('qp','err',e.message); toast('خطأ: '+e.message,'err'); }
+  btn.classList.remove('spinning');
+}
+
+async function reAuth(){
+  try{
+    const r=await fetch(`${QP_BASE}/api/token/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:qpUser,password:qpPass})});
+    const d=await r.json(); const t=d.token||d.access||d.access_token;
+    if(t){ qpToken=t; ls('qp_token',t); }
+  }catch(_){}
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PARSE shipment_contents  →  [{name, qty, detail, code}]
+// ═══════════════════════════════════════════════════════════
+// Format من QP:
+//   "عرض كحل روز 2 * بيري الاوريجينال - اللون اسود 101"
+//   منتجات متعددة مفصولة بـ | أو سطر جديد
+//   الكمية = الرقم مباشرة قبل *
+function parseItems(content){
+  if(!content) return [];
+
+  // فصّل بـ | أو سطر جديد
+  const segments = content.split(/\||\n/).map(s=>s.trim()).filter(s=>s.length>1);
+  const items = [];
+
+  for(const seg of segments){
+    // Pattern: "اسم [كمية] * [تفاصيل] [كود]"
+    const m = seg.match(/^(.+?)(\d+)\s*\*(.*)$/);
+    if(m){
+      let name   = m[1].trim().replace(/\s*\d+\s*$/,'').trim(); // اسم المنتج
+      const qty  = parseInt(m[2]);                                   // الكمية
+      const rest = m[3].trim();                                      // التفاصيل بعد *
+      // آخر رقم في rest هو الكود (101، 106...)
+      const codeM = rest.match(/(\d+)\s*$/);
+      const code  = codeM ? codeM[1] : '';
+      const detail = rest.replace(/(\d+)\s*$/,'').trim();
+      if(name) items.push({name, qty, detail, code});
+    } else {
+      // مفيش * — كمية 1، نظّف الأرقام من الاسم
+      const name = seg.replace(/\d+/g,'').replace(/[\*\|]/g,'').trim();
+      if(name) items.push({name, qty:1, detail:'', code:''});
+    }
+  }
+
+  return items.length ? items : [{name:content.slice(0,50), qty:1, detail:'', code:''}];
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MATCH item name → product cost
+// ═══════════════════════════════════════════════════════════
+function matchProduct(itemName){
+  if(!products.length) return null;
+  const n=itemName.toLowerCase().trim();
+  // exact match first
+  let found=products.find(p=>p.name.toLowerCase().trim()===n);
+  if(!found) found=products.find(p=>n.includes(p.name.toLowerCase().trim())||p.name.toLowerCase().trim().includes(n));
+  return found||null;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CALC PROFIT for one QP order
+// ═══════════════════════════════════════════════════════════
+function calcOrder(o){
+  const defaultCost=parseFloat(g('cfg-default-cost').value)||0;
+  const otherCost  =parseFloat(g('cfg-other').value)||0;
+  const fees=parseFloat(o.total_fees||0);
+  const rev =parseFloat(o.total_amount||0);
+
+  const items=parseItems(o.shipment_contents||'');
+  let cogs=0, allMatched=true;
+  const itemDetails=[];
+
+  for(const item of items){
+    const prod=matchProduct(item.name);
+    const unitCost=prod?prod.cost:defaultCost;
+    if(!prod) allMatched=false;
+    const lineCost=unitCost*item.qty;
+    cogs+=lineCost;
+    itemDetails.push({name:item.name, qty:item.qty, unitCost, matched:!!prod, lineCost});
+  }
+
+  const isDelivered=(o.Order_Delivery_Status||'')===('Delivered');
+  const totalCost=fees+cogs+otherCost;
+  const profit=isDelivered ? rev-totalCost : -(fees+otherCost);
+
+  return{rev:isDelivered?rev:0, fees, cogs:isDelivered?cogs:0, other:otherCost, profit, items:itemDetails, allMatched};
+}
+
+function recalc(){ renderTable(); updateKPIs(); }
+
+// ═══════════════════════════════════════════════════════════
+//  FILTERS
+// ═══════════════════════════════════════════════════════════
+function setF(s,el){
+  fStatus=s;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active'); page=1; applyF();
+}
+function applyF(){
+  const df=g('df').value, dt=g('dt').value;
+  filtered=merged.filter(o=>{
+    const date=(o.order_date||o.created_date||'').slice(0,10);
+    if(df&&date<df) return false;
+    if(dt&&date>dt) return false;
+    if(fStatus!=='all'&&(o.Order_Delivery_Status||'Pending')!==fStatus) return false;
+    return true;
+  });
+  page=1; renderTable(); updateKPIs();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER TABLE
+// ═══════════════════════════════════════════════════════════
+function renderTable(){
+  const tbody=g('ord-body');
+  const total=filtered.length;
+  const start=(page-1)*PER;
+  const slice=filtered.slice(start,start+PER);
+  g('ord-badge').textContent=total;
+  g('pag-info').textContent=`${page} / ${Math.ceil(total/PER)||1}`;
+  g('prev-btn').disabled=page<=1;
+  g('next-btn').disabled=start+PER>=total;
+
+  if(!slice.length){ tbody.innerHTML=`<tr><td colspan="10" class="empty">لا توجد نتائج</td></tr>`; return; }
+
+  tbody.innerHTML=slice.map(o=>{
+    const p=calcOrder(o);
+    const pc=p.profit>=0?'pos':'neg';
+    const sign=p.profit>=0?'+':'';
+    const status=o.Order_Delivery_Status||'Pending';
+    const date=(o.order_date||o.created_date||'').slice(0,10);
+
+    // items HTML
+    const itemsHtml=p.items.map(i=>{
+      const label = i.name + (i.detail?' — '+i.detail:'') + (i.code?' ('+i.code+')':'');
+      const qtyLabel = i.qty>1 ? ` ×${i.qty}` : '';
+      const costLabel = i.unitCost>0 ? ` = ${fmt(i.lineCost)} ج` : ' (تكلفة غير محددة)';
+      return `<span class="${i.matched?'item-match':'item-nomatch'}">${label}${qtyLabel}${costLabel} ${i.matched?'✓':'⚠️'}</span>`;
+    }).join('<br>');
+
+    return`<tr>
+      <td class="mono">${o.serial||'—'}</td>
+      <td>${o.full_name||'—'}</td>
+      <td class="mono">${date}</td>
+      <td>${o.city||'—'}</td>
+      <td>
+        <div style="font-size:11px;color:var(--muted2);max-width:200px">${(o.shipment_contents||'—').slice(0,60)}${(o.shipment_contents||'').length>60?'...':''}</div>
+        <div class="items-list">${itemsHtml}</div>
+      </td>
+      <td class="mono">${fmt(o.total_amount||0)} ج</td>
+      <td class="mono" style="color:var(--amber)">${fmt(p.cogs)} ج</td>
+      <td class="mono" style="color:var(--red)">${fmt(p.fees)} ج</td>
+      <td><span class="pill ${stCls(status)}">${stLbl(status)}</span>${o.has_return?'<span style="font-size:10px;color:var(--amber);margin-right:4px">↩مرتجع</span>':''}</td>
+      <td class="pc ${pc}">${sign}${fmt(p.profit)} ج</td>
+    </tr>`;
+  }).join('');
+}
+function goPage(d){ page+=d; renderTable(); window.scrollTo(0,0); }
+
+// ═══════════════════════════════════════════════════════════
+//  KPIs + VERDICT
+// ═══════════════════════════════════════════════════════════
+function updateKPIs(){
+  const df=g('df').value, dt=g('dt').value;
+  let rev=0,cogs=0,fees=0,tp=0,del=0;
+  for(const o of filtered){
+    const p=calcOrder(o);
+    rev+=p.rev; cogs+=p.cogs; fees+=p.fees; tp+=p.profit;
+    if((o.Order_Delivery_Status||'')==='Delivered') del++;
+  }
+  const totalAds=ads.filter(a=>(!df||a.d>=df)&&(!dt||a.d<=dt)).reduce((s,a)=>s+parseFloat(a.a||0),0);
+  const net=tp-totalAds;
+
+  g('k-profit').textContent=fmt(net)+' ج';
+  g('k-profit').className='kpi-val '+(net>=0?'g':'r');
+  g('k-profit-sub').textContent=del+' أوردر مُسلَّم';
+  g('k-rev').textContent=fmt(rev)+' ج';
+  g('k-cogs').textContent=fmt(cogs)+' ج';
+  g('k-fees').textContent=fmt(fees)+' ج';
+
+  // VERDICT BOX
+  const box=g('profit-box');
+  box.style.display='flex';
+  box.className='profit-box '+(net>=0?'win':'lose');
+  g('verdict-txt').textContent=net>=0?'🎉 كسبان في الفترة دي!':'⚠️ خسران في الفترة دي';
+  g('verdict-num').textContent=(net>=0?'+':'')+fmt(net)+' ج';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DAILY
+// ═══════════════════════════════════════════════════════════
+function buildDaily(){
+  const byDay={};
+  for(const o of merged){
+    const d=(o.order_date||o.created_date||'').slice(0,10); if(!d) continue;
+    if(!byDay[d]) byDay[d]={del:0,rev:0,cogs:0,fees:0,other:0,profit:0};
+    const p=calcOrder(o);
+    if((o.Order_Delivery_Status||'')==='Delivered'){ byDay[d].del++; byDay[d].rev+=p.rev; byDay[d].cogs+=p.cogs; byDay[d].fees+=p.fees; byDay[d].other+=p.other; }
+    byDay[d].profit+=p.profit;
+  }
+  for(const a of ads){
+    if(!byDay[a.d]) byDay[a.d]={del:0,rev:0,cogs:0,fees:0,other:0,profit:0};
+    byDay[a.d].profit-=parseFloat(a.a||0);
+  }
+  const days=Object.keys(byDay).sort().reverse().slice(0,60);
+  const tbody=g('daily-body');
+  if(!days.length){ tbody.innerHTML=`<tr><td colspan="9" class="empty">لا توجد بيانات</td></tr>`; return; }
+  let tR=0,tC=0,tF=0,tO=0,tP=0,tD=0;
+  tbody.innerHTML=days.map(d=>{
+    const r=byDay[d];
+    const adD=ads.filter(a=>a.d===d).reduce((s,a)=>s+parseFloat(a.a||0),0);
+    const margin=r.rev>0?Math.round(r.profit/r.rev*100):0;
+    const pc=r.profit>=0?'pos':'neg';
+    tR+=r.rev;tC+=r.cogs;tF+=r.fees;tO+=r.other;tP+=r.profit;tD+=r.del;
+    return`<tr>
+      <td class="mono">${d}</td><td class="mono">${r.del}</td>
+      <td class="mono">${fmt(r.rev)} ج</td>
+      <td class="mono" style="color:var(--amber)">${fmt(r.cogs)} ج</td>
+      <td class="mono" style="color:var(--red)">${fmt(r.fees)} ج</td>
+      <td class="mono" style="color:var(--red)">${fmt(adD)} ج</td>
+      <td class="mono">${fmt(r.other)} ج</td>
+      <td class="pc ${pc}">${r.profit>=0?'+':''}${fmt(r.profit)} ج</td>
+      <td class="mono ${pc}">${margin}%</td>
+    </tr>`;
+  }).join('')+`<tr class="tot-row">
+    <td>الإجمالي</td><td>${tD}</td>
+    <td>${fmt(tR)} ج</td><td>${fmt(tC)} ج</td><td>${fmt(tF)} ج</td>
+    <td></td><td>${fmt(tO)} ج</td>
+    <td class="pc ${tP>=0?'pos':'neg'}">${tP>=0?'+':''}${fmt(tP)} ج</td><td></td>
+  </tr>`;
+
+  const labels=days.slice(0,30).reverse();
+  const profits=labels.map(d=>Math.round(byDay[d]?.profit||0));
+  const revenues=labels.map(d=>Math.round(byDay[d]?.rev||0));
+  if(dayChart) dayChart.destroy();
+  dayChart=new Chart(g('daily-chart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'الإيراد',data:revenues,backgroundColor:'rgba(34,211,238,0.18)',borderColor:'#22d3ee',borderWidth:1,borderRadius:4,order:2},
+      {label:'صافي الربح',data:profits,backgroundColor:profits.map(v=>v>=0?'rgba(74,222,128,0.45)':'rgba(248,113,113,0.45)'),borderColor:profits.map(v=>v>=0?'#4ade80':'#f87171'),borderWidth:1,borderRadius:4,order:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#6b7494',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'}},
+        y:{ticks:{color:'#6b7494',font:{family:'JetBrains Mono',size:11},callback:v=>fmt(v)+' ج'},grid:{color:'rgba(255,255,255,0.04)'}}
+      }}
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  IMPORT PRODUCTS FROM EASYORDERS
+// ═══════════════════════════════════════════════════════════
+async function importFromEO(){
+  const key = g('eo-key').value.trim() || eoKey;
+  if(!key){ toast('أدخل EasyOrders API Key في خانة الاتصالات','err'); return; }
+  const btn = g('import-btn');
+  btn.style.opacity = '0.6';
+  btn.textContent = 'جاري الاستيراد...';
+  toast('جاري جلب المنتجات من EasyOrders...','');
+
+  try{
+    let page=1, allProds=[];
+    while(true){
+      const q = new URLSearchParams({page, limit:100});
+      const r = await fetch(`${EO_BASE}/products?${q}`, {
+        headers:{'Api-Key': key, 'Content-Type': 'application/json'}
+      });
+      if(!r.ok){
+        const txt = await r.text().catch(()=>'');
+        throw new Error(`EasyOrders ${r.status}: ${txt.slice(0,80)}`);
+      }
+      const d = await r.json();
+      // EasyOrders returns array directly or wrapped
+      const batch = Array.isArray(d) ? d : (d.data||d.products||d.results||[]);
+      allProds = allProds.concat(batch);
+      if(batch.length < 100) break;
+      page++; if(page>20) break;
+    }
+
+    if(!allProds.length){ toast('مفيش منتجات في المتجر!','err'); return; }
+
+    // merge with existing — don't overwrite costs if already set
+    let added=0, skipped=0;
+    for(const p of allProds){
+      const name = (p.name||'').trim();
+      if(!name) continue;
+      const exists = products.find(x=>x.name.toLowerCase()===name.toLowerCase());
+      if(exists){ skipped++; continue; }
+      products.push({ name, cost:0, price: parseFloat(p.price||p.sale_price||0) });
+      added++;
+    }
+
+    ls('products', JSON.stringify(products));
+    eoKey = key; ls('eo_key', key);
+    setDot('eo','ok',`EasyOrders: ${allProds.length} منتج`);
+    renderProds(); recalc();
+    toast(`✓ تم استيراد ${added} منتج جديد${skipped?' ('+skipped+' موجود مسبقاً)':''}`, 'ok');
+  } catch(e){
+    if(e.message.includes('Failed to fetch')||e.message.includes('NetworkError')||e.message.includes('CORS')){
+      // CORS blocked — fallback: open manual import dialog
+      setDot('eo','err','EasyOrders: CORS محجوب');
+      showManualImport(key);
+    } else {
+      toast('خطأ: '+e.message,'err');
+    }
+  }
+  btn.style.opacity = '1';
+  btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3"/><path d="M2 12h12"/></svg> استيراد من EasyOrders';
+}
+
+// CORS fallback — user pastes JSON manually
+function showManualImport(key){
+  g('manual-key').value = key||'';
+  const code = `fetch('https://api.easy-orders.net/api/v1/external-apps/products?limit=100&page=1',{headers:{'Api-Key':'${key||'YOUR_KEY'}'}}).then(r=>r.json()).then(d=>console.log(JSON.stringify(d)))`;
+  g('console-code').textContent = code;
+  g('manual-overlay').classList.add('open');
+}
+
+function closeManual(){ g('manual-overlay').classList.remove('open'); }
+
+function importManualJSON(){
+  const raw = g('manual-json').value.trim();
+  if(!raw){ toast('الصق الـ JSON الأول','err'); return; }
+  try{
+    let data = JSON.parse(raw);
+    if(!Array.isArray(data)) data = data.data||data.products||data.results||[];
+    let added=0, skipped=0;
+    for(const p of data){
+      const name=(p.name||'').trim(); if(!name) continue;
+      const exists=products.find(x=>x.name.toLowerCase()===name.toLowerCase());
+      if(exists){ skipped++; continue; }
+      products.push({name, cost:0, price:parseFloat(p.price||p.sale_price||0)});
+      added++;
+    }
+    ls('products',JSON.stringify(products));
+    renderProds(); recalc(); closeManual();
+    toast(`✓ تم استيراد ${added} منتج${skipped?' ('+skipped+' موجود)':''}`, 'ok');
+  }catch(e){ toast('JSON غير صحيح: '+e.message,'err'); }
+}
+
+function copyAPIUrl(){
+  const key = g('manual-key').value.trim();
+  const url = `https://api.easy-orders.net/api/v1/external-apps/products?limit=100`;
+  navigator.clipboard.writeText(url).then(()=>toast('تم نسخ الـ URL ✓','ok'));
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PRODUCTS
+// ═══════════════════════════════════════════════════════════
+function addProd(){
+  const name=g('np-name').value.trim();
+  const cost=parseFloat(g('np-cost').value)||0;
+  const price=parseFloat(g('np-price').value)||0;
+  if(!name){ toast('أدخل اسم المنتج','err'); return; }
+  products.push({name,cost,price});
+  ls('products',JSON.stringify(products));
+  g('np-name').value=''; g('np-cost').value=''; g('np-price').value='';
+  renderProds(); recalc();
+  toast('تم إضافة المنتج ✓','ok');
+}
+
+function delProd(i){
+  products.splice(i,1); ls('products',JSON.stringify(products));
+  renderProds(); recalc();
+}
+
+function updateProd(i,field,val){
+  if(field==='cost'||field==='price') products[i][field]=parseFloat(val)||0;
+  else products[i][field]=val;
+  ls('products',JSON.stringify(products));
+  recalc();
+}
+
+function renderProds(){
+  const el=g('prod-list');
+  if(!products.length){
+    el.innerHTML=`<div style="color:var(--muted);font-size:12px;padding:8px 0">لا توجد منتجات — أضف منتجاتك من الأسفل</div>`;
+    return;
+  }
+  el.innerHTML=products.map((p,i)=>`
+    <div class="prod-row" style="margin-bottom:6px">
+      <input type="text" value="${p.name}" onchange="updateProd(${i},'name',this.value)" placeholder="اسم المنتج"/>
+      <input type="number" value="${p.cost}" onchange="updateProd(${i},'cost',this.value)" class="mono-in" placeholder="تكلفة"/>
+      <input type="number" value="${p.price}" onchange="updateProd(${i},'price',this.value)" class="mono-in" placeholder="سعر بيع"/>
+      <button class="del-btn" onclick="delProd(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ADS
+// ═══════════════════════════════════════════════════════════
+function addAds(){
+  const d=g('ads-d').value, a=parseFloat(g('ads-a').value), n=g('ads-n').value;
+  if(!d||!a){ toast('أدخل التاريخ والمبلغ','err'); return; }
+  ads.push({d,a,n}); ads.sort((x,y)=>y.d.localeCompare(x.d));
+  ls('ads',JSON.stringify(ads));
+  g('ads-a').value=''; g('ads-n').value='';
+  renderAds(); updateKPIs(); toast('تم ✓','ok');
+}
+function delAds(i){ ads.splice(i,1); ls('ads',JSON.stringify(ads)); renderAds(); updateKPIs(); }
+function renderAds(){
+  const tbody=g('ads-body');
+  if(!ads.length){ tbody.innerHTML=`<tr><td colspan="4" class="empty">لا توجد مصاريف</td></tr>`; return; }
+  const total=ads.reduce((s,a)=>s+parseFloat(a.a||0),0);
+  tbody.innerHTML=ads.map((a,i)=>`<tr>
+    <td class="mono">${a.d}</td><td class="pc neg">${fmt(a.a)} ج</td><td>${a.n||'—'}</td>
+    <td><button onclick="delAds(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer">✕</button></td>
+  </tr>`).join('')+`<tr class="tot-row"><td>الإجمالي</td><td class="pc neg">${fmt(total)} ج</td><td colspan="2"></td></tr>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════
+function stCls(s){ return{Delivered:'pd','Out For Deliver':'po',Pending:'pp',Undelivered:'pu',Hold:'ph'}[s]||'pp'; }
+function stLbl(s){ return{Delivered:'مُسلَّم','Out For Deliver':'جاري',Pending:'انتظار',Undelivered:'لم يُسلَّم',Hold:'موقوف'}[s]||s; }
+function setDot(w,st,lbl){
+  g(w+'-dot').className='dot '+(st==='ok'?'ok':st==='err'?'err':st==='spin'?'spin':'');
+  g(w+'-lbl').textContent=lbl;
+}
+let _tt;
+function toast(msg,type){
+  const t=g('toast');
+  t.className='toast show'+(type==='ok'?' ok':type==='err'?' err':'');
+  g('toast-msg').textContent=msg;
+  clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('show'),4500);
+}
+</script>
+</body>
+</html>
